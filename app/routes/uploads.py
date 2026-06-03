@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form
-from app.services.import_service import upload_csv, upload_xlsx
+from app.services.upload_service import *
 from app.models.documento import Documento, TipoDocumento, Contexto
 
 router = APIRouter()
@@ -72,3 +72,71 @@ async def post_xlsx(
     )
     
     return await upload_xlsx(arquivo, documento)
+
+@router.post(
+        '/pdf/',
+        summary='Upload de PDF',
+        response_description='Confirmação de persistência',
+        responses = {
+            200: {'description': 'Documento salvo com sucesso'},
+            400: {'description': 'Documento iválido ou vazio'},
+            500: {'description': 'Erro interno no servidor'}
+        }
+    )
+async def post_pdf(
+    id_empresa: int = Form(..., description='ID da empresa no sistema ACTA', examples=[1]),
+    id_ciclo: int = Form(..., description='ID do ciclo de PDCA destino no sistema ACTA', examples=[6]),
+    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['Evidência']),
+    arquivo: UploadFile = File(..., description='Documento .PDF')
+):
+    """
+    Importa um arquivo .pdf vinculado a um ciclo PDCA.
+    
+    - Valida a extensão do arquivo
+    - Captura dados de texto das páginas do arquivo
+    - Persiste dados no MongoDB associados a empresa e ao ciclo
+    """
+    
+    documento = Documento(
+        id_empresa = id_empresa,
+        id_ciclo = id_ciclo,
+        tipo_documento = TipoDocumento.PDF,
+        contexto = contexto,
+        nome_documento = arquivo.filename
+    )
+    
+    return await upload_pdf(arquivo, documento)
+
+@router.post(
+        '/pptx/',
+        summary='Upload de PPTX',
+        response_description='Confirmação de persistência',
+        responses = {
+            200: {'description': 'Documento salvo com sucesso'},
+            400: {'description': 'Documento iválido ou vazio'},
+            500: {'description': 'Erro interno no servidor'}
+        }
+    )
+async def post_pptx(
+    id_empresa: int = Form(..., description='ID da empresa no sistema ACTA', examples=[1]),
+    id_ciclo: int = Form(..., description='ID do ciclo de PDCA destino no sistema ACTA', examples=[6]),
+    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['Evidência']),
+    arquivo: UploadFile = File(..., description='Documento .PPTX')
+):
+    """
+    Importa um arquivo .pptx vinculado a um ciclo PDCA.
+    
+    - Valida a extensão do arquivo
+    - Captura dados de texto dos slides do arquivo
+    - Persiste dados no MongoDB associados a empresa e ao ciclo
+    """
+    
+    documento = Documento(
+        id_empresa = id_empresa,
+        id_ciclo = id_ciclo,
+        tipo_documento = TipoDocumento.PPTX,
+        contexto = contexto,
+        nome_documento = arquivo.filename
+    )
+    
+    return await upload_pptx(arquivo, documento)

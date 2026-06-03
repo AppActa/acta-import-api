@@ -5,6 +5,8 @@ from app.utils.utils import normalizar_nomes
 import pandas as pd
 from io import BytesIO
 from re import match
+from pypdf import PdfReader
+from pptx import Presentation
 
 async def _verificador(arquivo: UploadFile, extensao: TipoDocumento):
     # verificar se extensão de arquivo é suportada
@@ -42,3 +44,37 @@ async def upload_xlsx(arquivo: UploadFile, documento: Documento):
         dados_por_planilha[planilha] = dados.to_dict(orient='records')
 
     return inserir_documento(documento, dados_por_planilha)
+
+async def upload_pdf(arquivo: UploadFile, documento: Documento):
+    buffer = await _verificador(arquivo, documento.tipo_documento)
+    pdf = PdfReader(buffer)
+    
+    dados = []
+    
+    for pagina in pdf.pages:
+        dados.append({
+            'pagina': pagina.page_number,
+            'conteudo': pagina.extract_text()
+        })
+    
+    return inserir_documento(documento, dados)
+
+async def upload_pptx(arquivo: UploadFile, documento: Documento):
+    buffer = await _verificador(arquivo, documento.tipo_documento)
+    pptx = Presentation(buffer)
+    
+    slides = []
+    
+    for i, slide in enumerate(pptx.slides):
+        textos = []
+        
+        for shape in slide.shapes:
+            if hasattr(shape, 'text'):
+                textos.append(shape.text)
+        
+        slides.append({
+            'pagina': i + 1,
+            'texto': ' \n '.join(textos)
+        })
+    
+    return inserir_documento(documento, slides)
