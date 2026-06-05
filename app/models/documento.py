@@ -8,11 +8,11 @@ class TipoDocumento(Enum):
     PPTX = 'PPTX'
 
 class Contexto(Enum):
-    EVIDENCIA = 'Evidência'
-    HISTORICO = 'Histórico'
-    TREINAMENTO = 'Treinamento'
-    PADRONIZACAO = 'Padronização'
-    LICAO_APRENDIDA = 'Lição Aprendida'
+    EVIDENCIA = 'EVIDENCIA'
+    HISTORICO = 'HISTORICO'
+    TREINAMENTO = 'TREINAMENTO'
+    PADRONIZACAO = 'PADRONIZACAO'
+    LICAO_APRENDIDA = 'LICAO_APRENDIDA'
 
 class Documento(BaseModel):
     id_empresa:               int = Field(..., description='ID da empresa no sistema ACTA', example=1)
