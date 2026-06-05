@@ -17,7 +17,7 @@ router = APIRouter()
 async def post_csv(
     id_empresa: int = Form(..., description='ID da empresa no sistema ACTA', examples=[1]),
     id_ciclo: int = Form(..., description='ID do ciclo de PDCA destino no sistema ACTA', examples=[6]),
-    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['Evidência']),
+    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['EVIDENCIA']),
     arquivo: UploadFile = File(..., description='Documento .CSV')
 ):
     """
@@ -51,7 +51,7 @@ async def post_csv(
 async def post_xlsx(
     id_empresa: int = Form(..., description='ID da empresa no sistema ACTA', examples=[1]),
     id_ciclo: int = Form(..., description='ID do ciclo de PDCA destino no sistema ACTA', examples=[6]),
-    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['Evidência']),
+    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['EVIDENCIA']),
     arquivo: UploadFile = File(..., description='Documento .XLSX')
 ):
     """
@@ -86,7 +86,7 @@ async def post_xlsx(
 async def post_pdf(
     id_empresa: int = Form(..., description='ID da empresa no sistema ACTA', examples=[1]),
     id_ciclo: int = Form(..., description='ID do ciclo de PDCA destino no sistema ACTA', examples=[6]),
-    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['Evidência']),
+    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['EVIDENCIA']),
     arquivo: UploadFile = File(..., description='Documento .PDF')
 ):
     """
@@ -120,7 +120,7 @@ async def post_pdf(
 async def post_pptx(
     id_empresa: int = Form(..., description='ID da empresa no sistema ACTA', examples=[1]),
     id_ciclo: int = Form(..., description='ID do ciclo de PDCA destino no sistema ACTA', examples=[6]),
-    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['Evidência']),
+    contexto: Contexto = Form(..., description='Contexto da requisição', examples=['EVIDENCIA']),
     arquivo: UploadFile = File(..., description='Documento .PPTX')
 ):
     """
