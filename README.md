@@ -1,12 +1,12 @@
 # ACTA Import API
 
-API de importação de arquivos do **ACTA**. Responsável por receber, validar e persistir dados históricos no formato `.csv` e `.xlsx` no banco de dados MongoDB com o objetivo de contextualização de agentes de inteligência artificial para gerar contexto a fim de alimentar análises como o gráfico de Ishikawa.
+API de importação de arquivos do **ACTA**. Responsável por receber, validar e persistir dados históricos no formato `.csv`, `.xlsx`, `.pdf` e `.pptx` no banco de dados MongoDB com o objetivo de contextualização de agentes de inteligência artificial para gerar contexto a fim de alimentar análises como o gráfico de Ishikawa.
 
 ---
 
 ## Funcionalidades
 
-- Upload e validação de arquivos `.csv` e `.xlsx`
+- Upload e validação de arquivos `.csv`, `.xlsx`, `.pdf` e `.pptx`
 - Normalização automática dos nomes de colunas (`snake_case`, sem acentos)
 - Suporte a múltiplas abas em arquivos `.xlsx`
 - Limpeza automática de linhas e colunas vazias
@@ -20,8 +20,8 @@ API de importação de arquivos do **ACTA**. Responsável por receber, validar e
 | Camada | Tecnologia |
 | --- | --- |
 | Framework | FastAPI |
-| Banco de dados | MongoDB via Pymongo|
-| Leitura de arquivos | Pandas + openpyxl |
+| Banco de dados | MongoDB via Pymongo |
+| Leitura de arquivos | Pandas, openpyxl, pypdf e python-pptx |
 | Normalização | python-slugify |
 | Variáveis de ambiente | python-dotenv |
 
@@ -109,6 +109,30 @@ Importa um arquivo `.xlsx`, suporte a múltiplas abas
 | `id_empresa` | `int` | ID da empresa |
 | `id_ciclo` | `int` | ID do ciclo do PDCA |
 | `arquivo` | `file` | Arquivo `.xlsx` |
+
+### `POST /pdf/`
+
+Importa um arquivo `.pdf`, suporte a múltiplas abas
+
+#### Form-data
+
+| Campo | Tipo | Descrição |
+| --- | --- | --- |
+| `id_empresa` | `int` | ID da empresa |
+| `id_ciclo` | `int` | ID do ciclo do PDCA |
+| `arquivo` | `file` | Arquivo `.pdf` |
+
+### `POST /pptx/`
+
+Importa um arquivo `.pptx`, suporte a múltiplas abas
+
+#### Form-data
+
+| Campo | Tipo | Descrição |
+| --- | --- | --- |
+| `id_empresa` | `int` | ID da empresa |
+| `id_ciclo` | `int` | ID do ciclo do PDCA |
+| `arquivo` | `file` | Arquivo `.pptx` |
 
 ---
 
