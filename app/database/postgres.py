@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from fastapi import HTTPException
 from dotenv import load_dotenv
 from os import getenv
@@ -7,13 +8,25 @@ load_dotenv()
 
 DB_URL = getenv('DB_URL')
 
+def _conectar():
+    return connect(DB_URL)
+
 def get_conn():
-    conn = connect(DB_URL)
+    try:
+       conn = _conectar()
+    except Exception:
+        raise HTTPException(status_code=503, detail='Erro no banco de dados')
     
     try:
         yield conn
-    except Exception as e:
-        raise HTTPException(status_code=500, detail='Erro no banco de dados')
     finally:
-        if conn is not None:
-            conn.close()
+        conn.close()
+
+@contextmanager # permite usar def com with
+def conn_worker():
+    conn = _conectar()
+
+    try:
+        yield conn
+    finally:
+        conn.close()
