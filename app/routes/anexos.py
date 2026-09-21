@@ -9,7 +9,8 @@ from app.utils.validacao import validar_anexo
 from app.services.fila import fila_uploads
 from app.services.jobs import processar_upload
 from app.models.enums import Status
-from app.schemas import AnexoForm, UploadJob
+from app.schemas import AnexoForm, UploadJob, UsuarioAutenticado
+from app.services.autenticacao import obter_usuario_autenticado
 
 DIR_TEMP = Path('/tmp/uploads')
 DIR_TEMP.mkdir(parents=True, exist_ok=True)
@@ -17,10 +18,10 @@ DIR_TEMP.mkdir(parents=True, exist_ok=True)
 router = APIRouter(prefix='/anexos', tags=['anexos'])
 
 @router.post('', status_code=status.HTTP_202_ACCEPTED)
-async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depends(), conn=Depends(get_conn)):
+async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depends(), conn=Depends(get_conn), usuario: UsuarioAutenticado = Depends(obter_usuario_autenticado)):
     extensao = await validar_anexo(arquivo)
 
-    id_anexo = _inserir_metadados(conn, arquivo, dados, extensao)
+    id_anexo = _inserir_metadados(conn, arquivo, dados, extensao, usuario)
     caminho_temp = DIR_TEMP / f'{id_anexo}_{uuid4().hex}{Path(arquivo.filename).suffix}'
 
     try:
@@ -45,14 +46,15 @@ async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depend
 
     return {'id': id_anexo, 'status': Status.PROCESSANDO.value}
 
-def _inserir_metadados(conn, arquivo: UploadFile, dados: AnexoForm, extensao: str) -> int:
-    with conn.cursor as cursor:
+def _inserir_metadados(conn, arquivo: UploadFile, dados: AnexoForm, extensao: str, usuario: UsuarioAutenticado) -> int:
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT set_config('app.current_user_id', %s, true)", str(usuario.id_usuario))
         cursor.execute("""
         INSERT INTO pdca.anexo (id_empresa, id_ciclo, criado_por, id_origem, nome_arquivo, tipo_arquivo, tamanho_arquivo, bucket_arquivo, caminho_arquivo, categoria, descricao, status)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL, %s, %s, %s)
         RETURNING id
         """, 
-        (dados.id_empresa, dados.id_ciclo, dados.criado_por, dados.id_origem, arquivo.filename, arquivo.content_type or extensao, arquivo.size, 'cloudinary', dados.categoria.value, dados.descricao, Status.PROCESSANDO.value))
+        (usuario.id_empresa, dados.id_ciclo, usuario.id_usuario, dados.id_origem, arquivo.filename, arquivo.content_type or extensao, arquivo.size, 'cloudinary', dados.categoria.value, dados.descricao, Status.PROCESSANDO.value))
 
         id_anexo = cursor.fetchone()[0]
     conn.commit()
