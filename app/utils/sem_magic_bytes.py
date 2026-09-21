@@ -8,6 +8,7 @@ async def _validar_text(arquivo: UploadFile) -> str:
     header = await arquivo.read(4096)
     await arquivo.seek(0)
 
+    # verifica se existe byte nulo (exclusivos de arquivos que não são texto puro)
     if b'\x00' in header:
         raise HTTPException(400, 'Arquivo não é um TXT puro')
 
