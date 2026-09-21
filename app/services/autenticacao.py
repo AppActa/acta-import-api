@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.schemas import UsuarioAutenticado
 
-ACTA_PG_API_URL = getenv('ACTA_PG_API_URL')
+ACTA_PG_API_URL = f'{getenv('ACTA_PG_API_URL')}/api/v1'
 bearer = HTTPBearer()
 
 async def obter_usuario_autenticado(credenciais: HTTPAuthorizationCredentials = Security(bearer)) -> UsuarioAutenticado:
@@ -13,12 +13,12 @@ async def obter_usuario_autenticado(credenciais: HTTPAuthorizationCredentials = 
 
     try:
         async with AsyncClient(timeout=60) as cliente:
-            health = await cliente.get(f'{ACTA_PG_API_URL}/api/v1/health')
+            health = await cliente.get(f'{ACTA_PG_API_URL}/health')
 
             if health.is_error:
                 raise HTTPException(503, 'acta-pg-api indisponível')
         
-            resposta = await cliente.get(f'{ACTA_PG_API_URL}/api/v1/me', headers=headers)
+            resposta = await cliente.get(f'{ACTA_PG_API_URL}/me', headers=headers)
     except RequestError:
         raise HTTPException(503, 'Não foi possível consultar acta-pg-api')
 
@@ -27,3 +27,8 @@ async def obter_usuario_autenticado(credenciais: HTTPAuthorizationCredentials = 
         
     if resposta.is_error:
         raise HTTPException(502, 'Falha ao consultar usuário autenticado')
+
+    try:
+        return UsuarioAutenticado.model_validate(resposta.json())
+    except (ValueError, TypeError):
+        raise HTTPException(502, 'Resposta inválida de acta-pg-api')

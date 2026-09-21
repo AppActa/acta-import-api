@@ -1,5 +1,5 @@
 from fastapi import Form
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.models.enums import Categoria
 
 class AnexoForm:
@@ -15,7 +15,6 @@ class AnexoForm:
         self.categoria = categoria
         self.descricao = descricao
 
-
 class UploadJob(BaseModel):
     id_anexo: int
     caminho_arquivo: str
@@ -23,5 +22,5 @@ class UploadJob(BaseModel):
     extensao: str
 
 class UsuarioAutenticado(BaseModel):
-    id_usuario: int
-    id_empresa: int
+    id_usuario: int = Field(alias='idUsuario')
+    id_empresa: int = Field(alias='idEmpresa')
