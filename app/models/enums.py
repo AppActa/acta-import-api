@@ -38,6 +38,7 @@ class TipoArquivo(Enum):
 # não incluso svg, txt e csv porque são texto puro e devem ser validados de outra forma
 EXTENSOES_PERMITIDAS = set({
     TipoImagem.JPEG: 'jpg',
+    TipoImagem.JPEG: 'jpeg',
     TipoImagem.PNG: 'png',
     TipoImagem.WEBP: 'webp',
     TipoImagem.GIF: 'gif',

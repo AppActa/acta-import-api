@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from enums import TipoArquivo, Categoria, TipoImagem, Status 
+from app.models.enums import TipoArquivo, Categoria, TipoImagem, Status
 
 class AnexoRequest(BaseModel):
     id_empresa: int
@@ -11,7 +11,7 @@ class AnexoRequest(BaseModel):
     tipo_arquivo: TipoArquivo | TipoImagem
     tamanho_arquivo: int
     bucket_arquivo: str
-    caminho_arquivo: str
+    caminho_arquivo: str | None = None
     categoria: Categoria
     descricao: str | None = None
 
