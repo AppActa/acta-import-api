@@ -1,7 +1,7 @@
 import filetype
 from fastapi import UploadFile, HTTPException
-from models.enums import EXTENSOES_PERMITIDAS
-from sem_magic_bytes import VALIDADORES_TEXTO
+from app.models.enums import EXTENSOES_PERMITIDAS
+from app.utils.sem_magic_bytes import VALIDADORES_TEXTO
 from pathlib import Path
 
 TAMANHO_MAXIMO_MB = 10
