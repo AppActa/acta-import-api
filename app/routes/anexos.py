@@ -1,9 +1,7 @@
 from pathlib import Path
 from uuid import uuid4
-
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from rq import Retry
-
 from app.database.postgres import get_conn
 from app.utils.validacao import validar_anexo
 from app.services.fila import fila_uploads
@@ -27,7 +25,7 @@ async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depend
     try:
         caminho_temp.write_bytes(await arquivo.read())
     except Exception:
-        _atualizar_status_erro(conn, id_anexo)
+        _atualizar_status_erro(conn, id_anexo, usuario.id_usuario)
         raise HTTPException(500, 'Falha ao salvar arquivo temporário')
 
     try:
@@ -40,7 +38,7 @@ async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depend
             retry=Retry(max=3, interval=[10, 30, 60]), result_ttl=3600, failure_ttl=86400
         )
     except Exception:
-        _atualizar_status_erro(conn, id_anexo)
+        _atualizar_status_erro(conn, id_anexo, usuario.id_usuario)
         caminho_temp.unlink(missing_ok=True)
         raise HTTPException(503, 'Não foi possível enfileirar o processamento')
 
@@ -48,7 +46,7 @@ async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depend
 
 def _inserir_metadados(conn, arquivo: UploadFile, dados: AnexoForm, extensao: str, usuario: UsuarioAutenticado) -> int:
     with conn.cursor() as cursor:
-        cursor.execute("SELECT set_config('app.current_user_id', %s, true)", str(usuario.id_usuario))
+        cursor.execute("SELECT set_config('app.current_user_id', %s, true)", (str(usuario.id_usuario),))
         cursor.execute("""
         INSERT INTO pdca.anexo (id_empresa, id_ciclo, criado_por, id_origem, nome_arquivo, tipo_arquivo, tamanho_arquivo, bucket_arquivo, caminho_arquivo, categoria, descricao, status)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL, %s, %s, %s)
@@ -60,7 +58,11 @@ def _inserir_metadados(conn, arquivo: UploadFile, dados: AnexoForm, extensao: st
     conn.commit()
     return id_anexo
 
-def _atualizar_status_erro(conn, id_anexo: int) -> None:
+def _atualizar_status_erro(conn, id_anexo: int, id_usuario: int) -> None:
     with conn.cursor() as cursor:
+        cursor.execute(
+            "SELECT set_config('app.current_user_id', %s, true)",
+            (str(id_usuario),),
+        )
         cursor.execute('UPDATE pdca.anexo SET status = %s WHERE id = %s', (Status.ERRO.value, id_anexo))
     conn.commit()
