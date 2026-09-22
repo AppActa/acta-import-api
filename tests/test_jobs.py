@@ -1,9 +1,7 @@
 from pathlib import Path
-
 from app.models.enums import Status
 from app.schemas import UploadJob
 from app.services import jobs
-
 
 class Cursor:
     def __init__(self):
@@ -18,7 +16,6 @@ class Cursor:
     def execute(self, sql, parametros):
         self.executados.append((sql, parametros))
 
-
 class Connection:
     def __init__(self):
         self.cursor_obj = Cursor()
@@ -29,7 +26,6 @@ class Connection:
 
     def commit(self):
         self.commits += 1
-
 
 def test_processa_upload_com_sucesso(monkeypatch):
     caminho = Path("tests/.tmp_arquivo.pdf")
@@ -43,7 +39,6 @@ def test_processa_upload_com_sucesso(monkeypatch):
 
     assert not caminho.exists()
     assert any(Status.ATIVO.value in parametros for _, parametros in conexao.cursor_obj.executados)
-
 
 class _contexto:
     def __init__(self, valor):
