@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.database.postgres import get_conn
 from app.schemas import UsuarioAutenticado
 
-ACTA_PG_API_URL = f'{getenv('ACTA_PG_API_URL')}/api/v1'
+ACTA_PG_API_URL = getenv('ACTA_PG_API_URL')
 bearer = HTTPBearer()
 
 async def obter_contexto_ia(

@@ -279,4 +279,4 @@ Os testes usam dublês para banco, Redis e Cloudinary. Portanto, a suíte valida
 ## 🤝 Links e autoria
 
 - [Repositório](https://github.com/AppActa/acta-import-api) · [Licença MIT](LICENSE) · `acta.institutojef@gmail.com`
-- Contribuições: use *issues* e *pull requests*; há um `[PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md)`.
+- Contribuições: use *issues* e *pull requests*; há um [PULL_REQUEST_TEMPLATE.md](PULL_REQUEST_TEMPLATE.md).
