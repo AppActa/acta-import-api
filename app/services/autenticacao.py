@@ -1,7 +1,7 @@
 from hmac import compare_digest
 from os import getenv
 from httpx import AsyncClient, RequestError
-from fastapi import Depends, Header, HTTPException, Security, status
+from fastapi import Depends, Header, HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.database.postgres import get_conn
@@ -13,7 +13,7 @@ bearer = HTTPBearer()
 async def obter_contexto_ia(
     credenciais: HTTPAuthorizationCredentials = Security(bearer),
     id_usuario: int = Header(..., alias='X-Acta-Usuario-Id', gt=0),
-    conn=Depends(get_conn),
+    conn=Depends(get_conn)
 ) -> UsuarioAutenticado:
     token_ia = getenv('ACTA_IA_TOKEN')
     if not token_ia or not compare_digest(credenciais.credentials, token_ia):
@@ -26,7 +26,7 @@ async def obter_contexto_ia(
             FROM public.usuario_sistema
             WHERE id = %s AND status = 'ATIVO'
             """,
-            (id_usuario,),
+            (id_usuario,)
         )
         usuario = cursor.fetchone()
 

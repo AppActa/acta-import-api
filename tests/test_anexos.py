@@ -6,7 +6,7 @@ import pytest
 from fastapi import UploadFile
 from starlette.datastructures import Headers
 from app.models.enums import Categoria, Status
-from app.routes import anexos
+from app.services import anexos
 from app.schemas import AnexoForm, UsuarioAutenticado
 
 class Cursor:
@@ -66,7 +66,7 @@ def test_criar_anexo_enfileira_upload_e_retorna_aceito(monkeypatch):
 
     arquivo = UploadFile(filename="arquivo.pdf", file=BytesIO(b"pdf"))
     arquivo.size = 3
-    resposta = asyncio.run(anexos.criar_anexo(arquivo, dados(), Connection(), usuario()))
+    resposta = asyncio.run(anexos.processar_anexo(arquivo, dados(), Connection(), usuario()))
 
     assert resposta == {"id": 42, "status": Status.PROCESSANDO.value}
     enqueue.assert_called_once()
@@ -84,11 +84,11 @@ def test_criar_anexo_marca_erro_se_falhar_ao_enfileirar(monkeypatch):
     monkeypatch.setattr(anexos, "_atualizar_status_erro", atualizar)
 
     with pytest.raises(Exception) as erro:
-        asyncio.run(anexos.criar_anexo(
+        asyncio.run(anexos.processar_anexo(
             UploadFile(filename="arquivo.pdf", file=BytesIO(b"pdf")),
             dados(),
             Connection(),
-            usuario(),
+            usuario()
         ))
 
     assert erro.value.status_code == 503

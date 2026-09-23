@@ -8,7 +8,7 @@ class AnexoForm:
         id_ciclo: int = Form(...),
         id_origem: int = Form(...),
         categoria: Categoria = Form(...),
-        descricao: str | None = Form(None),
+        descricao: str | None = Form(None)
     ):
         self.id_ciclo = id_ciclo
         self.id_origem = id_origem

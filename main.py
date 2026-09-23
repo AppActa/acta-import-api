@@ -15,8 +15,8 @@ def _resposta_erro(status_code: int, mensagens: list[str]) -> JSONResponse:
         content={
             'mensagens': mensagens,
             'httpStatus': status_code,
-            'timestamp': datetime.now().isoformat(timespec='seconds'),
-        },
+            'timestamp': datetime.now().isoformat(timespec='seconds')
+        }
     )
 
 @app.exception_handler(HTTPException)
