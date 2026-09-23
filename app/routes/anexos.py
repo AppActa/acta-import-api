@@ -8,15 +8,31 @@ from app.services.fila import fila_uploads
 from app.services.jobs import processar_upload
 from app.models.enums import Status
 from app.schemas import AnexoForm, UploadJob, UsuarioAutenticado
-from app.services.autenticacao import obter_usuario_autenticado
+from app.services.autenticacao import obter_contexto_ia, obter_usuario_autenticado
 
 DIR_TEMP = Path('/tmp/uploads')
 DIR_TEMP.mkdir(parents=True, exist_ok=True)
 
 router = APIRouter(prefix='/anexos', tags=['anexos'])
 
-@router.post('', status_code=status.HTTP_202_ACCEPTED)
-async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depends(), conn=Depends(get_conn), usuario: UsuarioAutenticado = Depends(obter_usuario_autenticado)):
+@router.post('', status_code=202)
+async def post_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depends(), conn=Depends(get_conn), usuario: UsuarioAutenticado = Depends(obter_usuario_autenticado)):
+    return await _processar_anexo(arquivo, dados, conn, usuario)
+
+@router.post('/ia', status_code=202)
+async def post_anexo_ia(arquivo: UploadFile = File(...), dados: AnexoForm = Depends(), conn=Depends(get_conn), usuario: UsuarioAutenticado = Depends(obter_contexto_ia)):
+    return await _processar_anexo(arquivo, dados, conn, usuario)
+
+@router.get('/ia/{id_anexo}')
+def get_anexo_ia(id_anexo: int, conn=Depends(get_conn), usuario: UsuarioAutenticado = Depends(obter_contexto_ia)):
+    return _get_anexo(conn, id_anexo, usuario.id_empresa)
+
+@router.get('/{id_anexo}')
+def get_anexo(id_anexo: int, conn=Depends(get_conn), usuario: UsuarioAutenticado = Depends(obter_usuario_autenticado)):
+    return _get_anexo(conn, id_anexo, usuario.id_empresa)
+
+async def _processar_anexo(arquivo: UploadFile, dados: AnexoForm, conn, usuario: UsuarioAutenticado):
+    _validar_ciclo_empresa(conn, dados.id_ciclo, usuario.id_empresa)
     extensao = await validar_anexo(arquivo)
 
     id_anexo = _inserir_metadados(conn, arquivo, dados, extensao, usuario)
@@ -32,7 +48,8 @@ async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depend
         fila_uploads.enqueue(
             processar_upload, UploadJob(
             id_anexo=id_anexo,
-            caminho_arquivo=str(caminho_temp),
+            id_usuario=usuario.id_usuario,
+            conteudo=caminho_temp.read_bytes(),
             nome_original=arquivo.filename,
             extensao=extensao),
             retry=Retry(max=3, interval=[10, 30, 60]), result_ttl=3600, failure_ttl=86400
@@ -42,7 +59,39 @@ async def criar_anexo(arquivo: UploadFile = File(...), dados: AnexoForm = Depend
         caminho_temp.unlink(missing_ok=True)
         raise HTTPException(503, 'Não foi possível enfileirar o processamento')
 
+    caminho_temp.unlink(missing_ok=True)
     return {'id': id_anexo, 'status': Status.PROCESSANDO.value}
+
+def _get_anexo(conn, id_anexo: int, id_empresa: int) -> dict:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT id, status, caminho_arquivo
+            FROM pdca.anexo
+            WHERE id = %s AND id_empresa = %s AND excluido_em IS NULL
+            """,
+            (id_anexo, id_empresa),
+        )
+        anexo = cursor.fetchone()
+
+    if anexo is None:
+        raise HTTPException(404, 'Anexo não encontrado')
+
+    return {
+        'id': anexo[0],
+        'status': anexo[1],
+        'enviado': anexo[1] == Status.ATIVO.value and bool(anexo[2]),
+        'url': anexo[2],
+    }
+
+def _validar_ciclo_empresa(conn, id_ciclo: int, id_empresa: int) -> None:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            'SELECT 1 FROM pdca.ciclo WHERE id = %s AND id_empresa = %s',
+            (id_ciclo, id_empresa),
+        )
+        if cursor.fetchone() is None:
+            raise HTTPException(403, 'Ciclo não pertence à empresa do usuário')
 
 def _inserir_metadados(conn, arquivo: UploadFile, dados: AnexoForm, extensao: str, usuario: UsuarioAutenticado) -> int:
     with conn.cursor() as cursor:
