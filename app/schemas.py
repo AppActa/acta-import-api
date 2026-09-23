@@ -17,7 +17,8 @@ class AnexoForm:
 
 class UploadJob(BaseModel):
     id_anexo: int
-    caminho_arquivo: str
+    id_usuario: int
+    conteudo: bytes
     nome_original: str
     extensao: str
 
