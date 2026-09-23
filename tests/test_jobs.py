@@ -31,13 +31,12 @@ def test_processa_upload_com_sucesso(monkeypatch):
     caminho = Path("tests/.tmp_arquivo.pdf")
     caminho.write_bytes(b"pdf")
     conexao = Connection()
-    job = UploadJob(id_anexo=42, caminho_arquivo=str(caminho), nome_original="arquivo.pdf", extensao="pdf")
+    job = UploadJob(id_anexo=42, id_usuario=3, conteudo=b"pdf", nome_original="arquivo.pdf", extensao="pdf")
     monkeypatch.setattr(jobs, "conn_worker", lambda: _contexto(conexao))
     monkeypatch.setattr(jobs, "enviar_cloudinary", lambda *args, **kwargs: {"url": "https://arquivo", "public_id": "42", "resource_type": "image"})
 
     jobs.processar_upload(job)
 
-    assert not caminho.exists()
     assert any(Status.ATIVO.value in parametros for _, parametros in conexao.cursor_obj.executados)
 
 class _contexto:
