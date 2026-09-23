@@ -182,6 +182,34 @@ A IA usa uma credencial própria de serviço e informa apenas o usuário em nome
 
 Os campos do formulário e a resposta `202 Accepted` são os mesmos de `POST /anexos`.
 
+### Consultar processamento do anexo
+
+Para usuários autenticados:
+
+```http
+GET /anexos/{id_anexo}
+Authorization: Bearer <TOKEN>
+```
+
+Para a IA:
+
+```http
+GET /anexos/ia/{id_anexo}
+Authorization: Bearer <ACTA_IA_TOKEN>
+X-Acta-Usuario-Id: <ID_DO_USUARIO>
+```
+
+A resposta informa o status atual, se o envio terminou com sucesso e a URL gerada pelo Cloudinary:
+
+```json
+{
+  "id": 42,
+  "status": "ATIVO",
+  "enviado": true,
+  "url": "https://res.cloudinary.com/..."
+}
+```
+
 ## ⚠️ Erros
 
 O formato confirmado é:
