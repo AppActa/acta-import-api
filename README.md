@@ -241,10 +241,13 @@ O worker:
 
 - atualiza o status do anexo;
 - envia o arquivo ao Cloudinary;
+- organiza o arquivo em `acta-arquivos/{nome-empresa}-{uuid-curto}/ciclo-{id_ciclo}/{id_anexo}`;
 - salva o `secure_url` retornado;
 - altera o status para `ATIVO` em caso de sucesso;
 - altera o status para `ERRO` em caso de falha definitiva;
 - remove o arquivo temporário após o processamento concluído.
+
+O nome da empresa é normalizado e recebe um UUID curto e estável, mantendo os anexos separados por empresa e ciclo.
 
 Falhas de enfileiramento retornam `503`. Arquivos vazios retornam `400` e arquivos acima de 10 MB retornam `413`.
 
