@@ -32,9 +32,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/appacta/acta-mongo-api:sha-${{ github.sha }}
+          tags: ghcr.io/appacta/acta-import-api:sha-${{ github.sha }}
           labels: |
-            org.opencontainers.image.source=https://github.com/AppActa/acta-mongo-api
+            org.opencontainers.image.source=https://github.com/AppActa/acta-import-api
             org.opencontainers.image.revision=${{ github.sha }}
 
       - name: baixar manifests do platform
@@ -60,13 +60,13 @@ jobs:
           pushed_at="${PUSHED_AT}"
           pushed_at=${pushed_at:-"não informado"}
 
-          sed -i "s|^\([[:space:]]*image: ghcr.io/appacta/acta-mongo-api\).*$|\1:sha-${GITHUB_SHA}|" apps/mongo-api.yaml
-          git diff --quiet -- apps/mongo-api.yaml && exit 0
+          sed -i "s|^\([[:space:]]*image: ghcr.io/appacta/acta-import-api\).*$|\1:sha-${GITHUB_SHA}|" apps/import-api.yaml
+          git diff --quiet -- apps/import-api.yaml && exit 0
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/mongo-api.yaml
-          git commit -m "chore: atualizar imagem de acta-mongo-api" -m "PR: ${pull_request}
+          git add apps/import-api.yaml
+          git commit -m "chore: atualizar imagem de acta-import-api" -m "PR: ${pull_request}
           SHA: ${GITHUB_SHA}
           Autor do commit: ${commit_author}
           Usuário do push: ${GITHUB_ACTOR}
