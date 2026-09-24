@@ -2,3 +2,4 @@
 docs/
 *.pyc
 tests/.*/
+tests\.tmp_arquivo.pdf
