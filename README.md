@@ -26,7 +26,7 @@ O worker executa continuamente essa fila, recupera o job, envia o arquivo ao Clo
 
 O Redis armazena a fila e o estado necessário para o RQ controlar a execução. Se o processamento falhar, o job possui até três tentativas, com intervalos de 10, 30 e 60 segundos. O arquivo temporário é mantido durante as tentativas e removido quando o processamento termina com sucesso ou falha definitiva.
 
-O Redis precisa estar acessível tanto pela API, que enfileira os jobs, quanto pelo worker, que os consome. Em ambientes com autenticação, configure também `REDIS_PASSWORD` no ambiente da aplicação e do worker.
+O Redis precisa estar acessível tanto pela API, que enfileira os jobs, quanto pelo worker, que os consome. Em ambientes com autenticação, configure também `REDIS_PASSWORD` e, quando exigido pelo provedor, `REDIS_USERNAME`. Para serviços Redis que exigem TLS, configure `REDIS_TLS=true`; em Redis local sem TLS, use `false`. As mesmas variáveis devem estar disponíveis para a API e para o worker.
 
 ## ✨ Funcionalidades
 
@@ -86,6 +86,10 @@ ACTA_IA_TOKEN=defina-um-token-interno
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
+REDIS_DB=0
+REDIS_USERNAME=
+REDIS_PASSWORD=
+REDIS_TLS=false
 ```
 
 Nunca versione senhas, tokens ou credenciais do Cloudinary. O arquivo `.env.example` deve conter somente valores de referência.
