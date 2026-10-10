@@ -12,7 +12,7 @@ REDIS_HOST = getenv('REDIS_HOST')
 REDIS_PORT = getenv('REDIS_PORT')
 REDIS_DB = getenv('REDIS_DB')
 REDIS_PASSWORD = getenv('REDIS_PASSWORD')
-REDIS_USERNAME = getenv('REDIS_USERNAME')
+REDIS_USERNAME = (getenv('REDIS_USERNAME') or '').strip() or None
 REDIS_TLS = getenv('REDIS_TLS', 'false').strip().lower() == 'true'
 
 @lru_cache # apenas um pool por sessão

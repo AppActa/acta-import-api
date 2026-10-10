@@ -13,6 +13,14 @@ def test_redis_tls_defaults_to_disabled_when_unset(monkeypatch):
     assert module.REDIS_TLS is False
 
 
+def test_blank_redis_username_is_treated_as_unset(monkeypatch):
+    monkeypatch.setenv("REDIS_USERNAME", "  ")
+
+    module = importlib.reload(redis_database)
+
+    assert module.REDIS_USERNAME is None
+
+
 def test_redis_pool_uses_ssl_connection_when_tls_enabled(monkeypatch):
     monkeypatch.setattr(redis_database, "REDIS_HOST", "redis.example.test")
     monkeypatch.setattr(redis_database, "REDIS_PORT", "6379")
