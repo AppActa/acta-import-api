@@ -1,39 +1,9 @@
-from hmac import compare_digest
-from os import getenv
 from httpx import AsyncClient, RequestError
-from fastapi import Depends, Header, HTTPException, Security
+from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
-from app.database.postgres import get_conn
+from app.config import ACTA_PG_API_URL
 from app.schemas import UsuarioAutenticado
-
-ACTA_PG_API_URL = getenv('ACTA_PG_API_URL')
 bearer = HTTPBearer()
-
-async def obter_contexto_ia(
-    credenciais: HTTPAuthorizationCredentials = Security(bearer),
-    id_usuario: int = Header(..., alias='X-Acta-Usuario-Id', gt=0),
-    conn=Depends(get_conn)
-) -> UsuarioAutenticado:
-    token_ia = getenv('ACTA_IA_TOKEN')
-    if not token_ia or not compare_digest(credenciais.credentials, token_ia):
-        raise HTTPException(401, 'Token da IA inválido')
-
-    with conn.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT id, id_empresa
-            FROM public.usuario_sistema
-            WHERE id = %s AND status = 'ATIVO'
-            """,
-            (id_usuario,)
-        )
-        usuario = cursor.fetchone()
-
-    if usuario is None:
-        raise HTTPException(403, 'Usuário da IA não autorizado')
-
-    return UsuarioAutenticado(idUsuario=usuario[0], idEmpresa=usuario[1])
 
 async def obter_usuario_autenticado(credenciais: HTTPAuthorizationCredentials = Security(bearer)) -> UsuarioAutenticado:
     headers = {'Authorization': f'Bearer {credenciais.credentials}'}
@@ -56,6 +26,16 @@ async def obter_usuario_autenticado(credenciais: HTTPAuthorizationCredentials = 
         raise HTTPException(502, 'Falha ao consultar usuário autenticado')
 
     try:
-        return UsuarioAutenticado.model_validate(resposta.json())
+        dados_usuario = resposta.json()
+        if not isinstance(dados_usuario, dict):
+            raise ValueError
+    except (ValueError, TypeError):
+        raise HTTPException(502, 'Resposta inválida de acta-pg-api')
+
+    if dados_usuario.get('status') != 'ATIVO':
+        raise HTTPException(403, 'Usuário não autorizado')
+
+    try:
+        return UsuarioAutenticado.model_validate(dados_usuario)
     except (ValueError, TypeError):
         raise HTTPException(502, 'Resposta inválida de acta-pg-api')
