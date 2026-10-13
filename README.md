@@ -26,7 +26,7 @@ O worker executa continuamente essa fila, recupera o job, envia o arquivo ao Clo
 
 O Redis armazena a fila e o estado necessário para o RQ controlar a execução. Se o processamento falhar, o job possui até três tentativas, com intervalos de 10, 30 e 60 segundos. O arquivo temporário é mantido durante as tentativas e removido quando o processamento termina com sucesso ou falha definitiva.
 
-O Redis precisa estar acessível tanto pela API, que enfileira os jobs, quanto pelo worker, que os consome. Em ambientes com autenticação, configure também `REDIS_PASSWORD` e, quando exigido pelo provedor, `REDIS_USERNAME`. Para serviços Redis que exigem TLS, configure `REDIS_TLS=true`; em Redis local sem TLS, use `false`. As mesmas variáveis devem estar disponíveis para a API e para o worker.
+O Redis precisa estar acessível tanto pela API, que enfileira os jobs, quanto pelo worker, que os consome. Em ambientes com autenticação, configure também `REDIS_PASSWORD`. A conexão usa TLS obrigatoriamente (`REDIS_SSL = True` em `app/config.py`), sem uma variável de ambiente para desativá-lo; use um serviço Redis com TLS habilitado. As configurações de conexão devem estar disponíveis para a API e para o worker.
 
 ## ✨ Funcionalidades
 
@@ -82,15 +82,14 @@ CLOUDINARY_API_KEY=sua_api_key
 CLOUDINARY_API_SECRET=seu_api_secret
 
 ACTA_PG_API_URL=https://acta-pg-api.onrender.com/api/v1
-ACTA_IA_TOKEN=defina-um-token-interno
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_DB=0
-REDIS_USERNAME=
 REDIS_PASSWORD=
-REDIS_TLS=false
 ```
+
+`REDIS_DB` e `REDIS_PASSWORD` são opcionais conforme a configuração do serviço. A conexão Redis usa TLS obrigatoriamente; se `REDIS_HOST` for `localhost`, o Redis local também precisa estar configurado para TLS.
 
 Nunca versione senhas, tokens ou credenciais do Cloudinary. O arquivo `.env.example` deve conter somente valores de referência.
 
@@ -177,12 +176,11 @@ Essa resposta não representa a confirmação final do Cloudinary. O status fina
 
 ```http
 POST /anexos/ia
-Authorization: Bearer <ACTA_IA_TOKEN>
-X-Acta-Usuario-Id: <ID_DO_USUARIO>
+Authorization: Bearer <TOKEN>
 Content-Type: multipart/form-data
 ```
 
-A IA usa uma credencial própria de serviço e informa apenas o usuário em nome de quem está realizando o upload. A API valida se esse usuário está ativo, obtém a empresa diretamente de `public.usuario_sistema` e verifica se o ciclo pertence à mesma empresa. O `id_empresa` e o `firebase_uid` não são recebidos nessa rota.
+A rota `/ia` usa a mesma autenticação Bearer de `POST /anexos`: a API consulta o usuário na `acta-pg-api` e utiliza o contexto retornado para verificar a empresa do ciclo. Não há token de serviço ou cabeçalho de usuário separado para essa rota.
 
 Os campos do formulário e a resposta `202 Accepted` são os mesmos de `POST /anexos`.
 
@@ -195,13 +193,14 @@ GET /anexos/{id_anexo}
 Authorization: Bearer <TOKEN>
 ```
 
-Para a IA:
+Para a rota de integração da IA:
 
 ```http
 GET /anexos/ia/{id_anexo}
-Authorization: Bearer <ACTA_IA_TOKEN>
-X-Acta-Usuario-Id: <ID_DO_USUARIO>
+Authorization: Bearer <TOKEN>
 ```
+
+Essa rota usa a mesma autenticação Bearer de `GET /anexos/{id_anexo}`.
 
 A resposta informa o status atual, se o envio terminou com sucesso e a URL gerada pelo Cloudinary:
 
@@ -280,8 +279,6 @@ Os testes usam dublês para banco, Redis e Cloudinary. Portanto, a suíte valida
 ├── main.py             # Inicialização da API
 └── worker.py           # Inicialização do worker RQ
 ```
-
-
 
 ## 🤝 Links e autoria
 
