@@ -1,12 +1,7 @@
 from contextlib import contextmanager
 from fastapi import HTTPException
-from dotenv import load_dotenv
-from os import getenv
 from psycopg2 import connect
-
-load_dotenv()
-
-DB_URL = getenv('DB_URL')
+from app.config import DB_URL
 
 def _conectar():
     return connect(DB_URL)
