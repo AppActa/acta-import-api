@@ -76,6 +76,12 @@ def _validar_ciclo_empresa(conn, id_ciclo: int, id_empresa: int) -> None:
             raise HTTPException(403, 'Ciclo não pertence à empresa do usuário')
 
 def _inserir_metadados(conn, arquivo: UploadFile, dados: AnexoForm, extensao: str, usuario: UsuarioAutenticado) -> int:
+    tipo_arquivo = arquivo.content_type or extensao
+
+    # Corrige mime type genérico
+    if extensao == 'txt' and tipo_arquivo == 'application/octet-stream':
+        tipo_arquivo = 'text/plain'
+
     with conn.cursor() as cursor:
         cursor.execute("SELECT set_config('app.current_user_id', %s, true)", (str(usuario.id_usuario),))
         cursor.execute("""
@@ -83,7 +89,7 @@ def _inserir_metadados(conn, arquivo: UploadFile, dados: AnexoForm, extensao: st
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL, %s, %s, %s)
         RETURNING id
         """,
-        (usuario.id_empresa, dados.id_ciclo, usuario.id_usuario, dados.id_origem, arquivo.filename, arquivo.content_type or extensao, arquivo.size, 'cloudinary', dados.categoria.value, dados.descricao, Status.PROCESSANDO.value))
+        (usuario.id_empresa, dados.id_ciclo, usuario.id_usuario, dados.id_origem, arquivo.filename, tipo_arquivo, arquivo.size, 'cloudinary', dados.categoria.value, dados.descricao, Status.PROCESSANDO.value))
 
         id_anexo = cursor.fetchone()[0]
     conn.commit()
