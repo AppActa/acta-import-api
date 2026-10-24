@@ -1,5 +1,3 @@
-import re
-import unicodedata
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from uuid import NAMESPACE_URL, uuid5
@@ -7,7 +5,7 @@ from rq import get_current_job
 from app.database.postgres import conn_worker
 from app.models.enums import Status
 from app.schemas import UploadJob
-from app.services.cloudinary import enviar_cloudinary
+from app.services.cloudinary import enviar_cloudinary, normalizar_nome_empresa
 
 def processar_upload(job: UploadJob) -> None:
     caminho_temp = None
@@ -62,8 +60,7 @@ def _obter_pasta_cloudinary(conn, id_anexo: int) -> str:
         raise ValueError('Empresa do anexo não encontrada')
 
     id_empresa, nome_empresa, id_ciclo = empresa
-    nome_normalizado = unicodedata.normalize('NFKD', nome_empresa).encode('ascii', 'ignore').decode().lower()
-    nome_normalizado = re.sub(r'[^a-z0-9]+', '-', nome_normalizado).strip('-')
+    nome_normalizado = normalizar_nome_empresa(nome_empresa)
     uuid_curto = uuid5(NAMESPACE_URL, f'acta:empresa:{id_empresa}').hex[:8]
 
     return f'acta-arquivos/{nome_normalizado}-{uuid_curto}/ciclo-{id_ciclo}'

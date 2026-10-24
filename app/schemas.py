@@ -25,3 +25,6 @@ class UploadJob(BaseModel):
 class UsuarioAutenticado(BaseModel):
     id_usuario: int = Field(alias='idUsuario')
     id_empresa: int = Field(alias='idEmpresa')
+
+class PastaEmpresaResponse(BaseModel):
+    pasta: str

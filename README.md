@@ -184,6 +184,23 @@ A rota `/ia` usa a mesma autenticação Bearer de `POST /anexos`: a API consulta
 
 Os campos do formulário e a resposta `202 Accepted` são os mesmos de `POST /anexos`.
 
+### Consultar pasta da empresa no Cloudinary
+
+```http
+GET /anexos/pasta-empresa
+Authorization: Bearer <TOKEN>
+```
+
+A API obtém o nome da empresa do usuário autenticado e busca as pastas correspondentes em `acta-arquivos`. Para confirmar a propriedade da pasta, consulta os subdiretórios `ciclo-{id_ciclo}` e verifica no banco se algum ciclo pertence à empresa autenticada. Essa verificação também é feita quando existe apenas uma pasta com o nome correspondente.
+
+```json
+{
+  "pasta": "instituto-j-f-f6ce836f"
+}
+```
+
+O valor retornado é somente a pasta da empresa, sem `acta-arquivos/` ou o subdiretório do ciclo. Se nenhuma pasta tiver vínculo confirmado com a empresa, retorna `404`; falhas ao consultar o Cloudinary retornam `503`. A consulta percorre todas as páginas das listagens de pastas e não cria diretórios ou arquivos.
+
 ### Consultar processamento do anexo
 
 Para usuários autenticados:
