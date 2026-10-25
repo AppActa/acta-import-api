@@ -9,7 +9,7 @@ O serviço valida o arquivo recebido, registra seus metadados no PostgreSQL, sal
 O `acta-import-api` atua como um serviço especializado do ecossistema ACTA:
 
 1. recebe o arquivo e os dados do anexo;
-2. consulta o usuário autenticado no `acta-pg-api`;
+2. consulta o contexto autenticado em `/api/v1/contexto` da `acta-auth-api`;
 3. valida tamanho, extensão e conteúdo;
 4. registra os metadados em `pdca.anexo`;
 5. enfileira o processamento no Redis;
@@ -34,7 +34,7 @@ O Redis precisa estar acessível tanto pela API, que enfileira os jobs, quanto p
 - Validação de arquivos PDF, DOCX, PPTX, XLSX e imagens.
 - Validação específica para TXT, CSV e SVG.
 - Limite de 10 MB por arquivo.
-- Autenticação por Bearer Token delegada ao `acta-pg-api`.
+- Autenticação por Bearer Token delegada à `acta-auth-api`.
 - Registro do usuário e da empresa a partir do contexto autenticado.
 - Processamento assíncrono com Redis Queue (RQ).
 - Upload de arquivos para o Cloudinary.
@@ -66,7 +66,7 @@ O Redis precisa estar acessível tanto pela API, que enfileira os jobs, quanto p
 - PostgreSQL acessível com a tabela `pdca.anexo` já criada.
 - Redis acessível para a fila `uploads`.
 - Conta e credenciais do Cloudinary.
-- `acta-pg-api` acessível para autenticação e consulta do usuário.
+- `acta-auth-api` acessível para autenticação e consulta do contexto ativo.
 
 As dependências Python usadas pela aplicação devem estar instaladas no ambiente virtual do projeto.
 
@@ -81,7 +81,7 @@ CLOUDINARY_CLOUD_NAME=seu_cloud_name
 CLOUDINARY_API_KEY=sua_api_key
 CLOUDINARY_API_SECRET=seu_api_secret
 
-ACTA_PG_API_URL=https://acta-pg-api.onrender.com/api/v1
+ACTA_AUTH_API_URL=http://localhost:8080/api/v1
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -180,9 +180,26 @@ Authorization: Bearer <TOKEN>
 Content-Type: multipart/form-data
 ```
 
-A rota `/ia` usa a mesma autenticação Bearer de `POST /anexos`: a API consulta o usuário na `acta-pg-api` e utiliza o contexto retornado para verificar a empresa do ciclo. Não há token de serviço ou cabeçalho de usuário separado para essa rota.
+A rota `/ia` usa a mesma autenticação Bearer de `POST /anexos`: a API consulta `/contexto` na `acta-auth-api` e utiliza os IDs retornados para verificar a empresa do ciclo. A Auth valida token, usuário, empresa e colaborador ativos. `ACTA_AUTH_API_URL` deve incluir o prefixo `/api/v1` e substitui `ACTA_PG_API_URL`; configure o endereço da Auth no ambiente antes de iniciar a Import. Não há token de serviço ou cabeçalho de usuário separado para essa rota.
 
 Os campos do formulário e a resposta `202 Accepted` são os mesmos de `POST /anexos`.
+
+### Consultar pasta da empresa no Cloudinary
+
+```http
+GET /anexos/pasta-empresa
+Authorization: Bearer <TOKEN>
+```
+
+A API obtém o nome da empresa do usuário autenticado e busca as pastas correspondentes em `acta-arquivos`. Para confirmar a propriedade da pasta, consulta os subdiretórios `ciclo-{id_ciclo}` e verifica no banco se algum ciclo pertence à empresa autenticada. Essa verificação também é feita quando existe apenas uma pasta com o nome correspondente.
+
+```json
+{
+  "pasta": "instituto-j-f-f6ce836f"
+}
+```
+
+O valor retornado é somente a pasta da empresa, sem `acta-arquivos/` ou o subdiretório do ciclo. Se nenhuma pasta tiver vínculo confirmado com a empresa, retorna `404`; falhas ao consultar o Cloudinary retornam `503`. A consulta percorre todas as páginas das listagens de pastas e não cria diretórios ou arquivos.
 
 ### Consultar processamento do anexo
 
